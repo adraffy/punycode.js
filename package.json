@@ -1,0 +1,32 @@
+{
+	"name": "@adraffy/punycode",
+	"version": "0.0.1",
+	"description": "Punycode without IDNA",
+	"keywords": [
+		"Punycode"
+	],
+	"main": "index.js",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/adraffy/punycode.js.git"
+	},
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/adraffy/punycode.js/issues"
+	},
+	"homepage": "https://github.com/adraffy/punycode.js#readme",
+	"author": {
+		"name": "raffy.eth",
+		"email": "raffy@me.com",
+		"url": "http://raffy.antistupid.com"
+	},
+	"scripts": {
+		"build": "rollup -c",
+		"test": "node test.js"
+	},
+	"devDependencies": {
+		"rollup": "^2.77.2",
+		"rollup-plugin-terser": "^7.0.2"
+	}
+}
