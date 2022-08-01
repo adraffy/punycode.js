@@ -2,7 +2,7 @@
 
 0-dependancy low-level [Punycode](https://datatracker.ietf.org/doc/html/rfc3492) encoder/decoder without IDNA that works in the browser.
 
-[Demo](./test/demo.html)
+[Demo](https://adraffy.github.io/punycode.js/test/demo.html)
 
 ```Javascript
 import {puny_encode, puny_decode} from '@adraffy/punycode';
