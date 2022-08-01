@@ -1,4 +1,4 @@
-import {puny_decode, puny_encode} from './index.js';
+import {puny_decode, puny_encode} from '../index.js';
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-7.1
 const TESTS = [
@@ -126,7 +126,6 @@ function removed_mixed_casing(s) {
 	return s.slice(0, pos) + s.slice(pos).toLowerCase();
 }
 
-// check RFC examples
 for (let test of TESTS) {
 	let enc0 = explode_cp(removed_mixed_casing(test.encoded));
 	let dec0 = explode_cp(test.decoded);
@@ -177,12 +176,14 @@ for (let r = 0; r < 1; r++) {
 	}
 }
 
-// readme
-let v1 = explode_cp('abc');
-console.log(v1);
-console.log(puny_encode(v1));
-console.log(puny_encode(v1) === v1);
-console.log(puny_encode([128169]));
-console.log(puny_decode([108, 115, 56, 104]));
+// check readme
+function readme(s) {
+	let cps = explode_cp(s);
+	let enc = puny_encode(cps);
+	let dec = cps === enc ? cps : puny_decode(enc);
+	console.log({cps, enc, dec});
+}
+readme('abc');
+readme('💩');
 
 console.log('OK');

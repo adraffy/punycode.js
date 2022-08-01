@@ -1,9 +1,12 @@
 # punycode.js
 
-0-dependancy low-level Punycode encoder/decoder that works in the browser. 
+0-dependancy low-level Punycode encoder/decoder without IDNA that works in the browser.
+
+* [Demo](./test/demo.html)
 
 ```Javascript
 import {puny_encode, puny_decode} from '@adraffy/punycode';
+// npm i @adraffy/punycode
 // browser: https://unpkg.com/@adraffy/punycode@latest/dist/index.min.js
 
 // puny_encode 

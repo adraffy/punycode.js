@@ -1,7 +1,7 @@
 {
 	"name": "@adraffy/punycode",
-	"version": "0.0.1",
-	"description": "Punycode without IDNA",
+	"version": "0.0.2",
+	"description": "Low-level Punycode encoder/decoder without IDNA",
 	"keywords": [
 		"Punycode"
 	],
@@ -23,7 +23,7 @@
 	},
 	"scripts": {
 		"build": "rollup -c",
-		"test": "node test.js"
+		"test": "node test/test.js"
 	},
 	"devDependencies": {
 		"rollup": "^2.77.2",

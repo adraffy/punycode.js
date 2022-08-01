@@ -42,7 +42,7 @@ function basic_from_cp(cp) {
 	} else if (cp >= 65 && cp <= 90) { // A-Z 
 		return cp - 65;
 	} else {		
-		throw new Error(`expected basic character: ${cp}`);
+		throw new Error(`not alphanumeric ASCII: 0x${cp.toString(16)}`);
 	}
 }
 
