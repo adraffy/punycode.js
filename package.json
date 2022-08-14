@@ -6,6 +6,7 @@
 		"Punycode"
 	],
 	"main": "index.js",
+	"browser": "dist/index.min.js",
 	"type": "module",
 	"repository": {
 		"type": "git",
