@@ -1,4 +1,7 @@
-import {puny_decode, puny_encode} from '../index.js';
+import {
+	puny_decode, puny_decoded,
+	puny_encode, puny_encoded
+} from '../index.js';
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-7.1
 const TESTS = [
@@ -143,19 +146,20 @@ for (let test of TESTS) {
 	}
 	try {
 		if (!same_array(enc0, enc1)) throw new Error(`wrong encode`);
-		if (!same_array(dec0, dec1)) throw new Error(`wrong decode`);	
+		if (!same_array(dec0, dec1)) throw new Error(`wrong decode`);
 	} catch (err) {
 		console.log({...test, enc0, enc1, dec0, dec1});
 		console.log(err);
 		process.exit(1);
 	}
-	console.log(test.name);
+	//console.log(test.name);
 }
+console.log('PASS tests');
 
 // create random puny encodings that decode
 // then require that the encoding matches
 let chars = explode_cp('abcdefghijklmnopqrstuvwxyz0123456789');
-for (let r = 0; r < 1; r++) {
+for (let r = 0; r < 10000; r++) {
 	let enc0, dec;
 	while (true) {
 		try {
@@ -165,25 +169,19 @@ for (let r = 0; r < 1; r++) {
 		} catch (err) {
 		}
 	}
+	let str = String.fromCodePoint(...dec);
 	let enc1;	
 	try {
 		enc1 = puny_encode(dec);
 		if (!same_array(enc0, enc1)) throw new Error(`wrong encode`);
+		if (puny_decoded(puny_encoded(str)) !== str) throw new Error(`wrong str`);
 	} catch (err) {
 		console.log(enc0, dec, enc1);
 		console.log(err);
 		process.exit(2);
-	}
+	}	
+	//console.log(str);
 }
-
-// check readme
-function readme(s) {
-	let cps = explode_cp(s);
-	let enc = puny_encode(cps);
-	let dec = cps === enc ? cps : puny_decode(enc);
-	console.log({cps, enc, dec});
-}
-readme('abc');
-readme('💩');
+console.log('PASS random');
 
 console.log('OK');

@@ -19,6 +19,9 @@ header {
 	display: flex;
 	justify-content: space-between;
 }
+button {
+	cursor: pointer;
+}
 h1 {
 	font-size: 24pt;
 	margin: 0;
@@ -27,15 +30,20 @@ input {
 	padding: 0.5rem;
 	font-size: 16pt;
 }
-p {
-	margin: 0;
+#examples {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
 }
-pre {
-	margin: 0;
+#codepoints {
 	white-space: pre-wrap;
+	font: 10pt monospace;
 }
-pre.error {
+#codepoints.error {
+	background: #fcc;
 	color: #c00;
+	padding: 10px;
+	border: 3px dashed #f00;
 }
 footer {
 	text-align: center;
@@ -46,6 +54,16 @@ footer {
 	padding: 3px 6px;
 	border: 1px solid #ccc;
 	border-radius: 4px;
+	font-size: 16pt;
+}
+#readme {
+	background: #ffc;
+}
+#readme li + li {
+	margin-top: 5px;
+}
+#link_btn {
+	float: right;
 }
 @media only screen and (max-width: 800px) { 
 	body {
@@ -62,21 +80,34 @@ footer {
 <h1><a href="https://datatracker.ietf.org/doc/html/rfc3492">Punycode</a> Coder</h1>
 <a href="https://github.com/adraffy/punycode.js">@adraffy/punycode.js</a>
 </header>
+<div>
+<button id="link_btn">Copy Link</button>
 <div id="examples">
+<button data-puny="1">xn--w77hd</button>
 <button>💩</button>
 <button>👩🏽‍⚕</button>
 <button>👩🏽⚕</button>
 <button>🚴‍♂️</button>
 <button>🚴♂</button>
-<button>😵‍💫😵‍💫😵‍💫</button>
-<button>😵💫😵💫😵💫</button>
+<button data-replace="1">😵‍💫😵‍💫😵‍💫</button>
+<button data-replace="1">😵💫😵💫😵💫</button>
 </div>
-<p>No ASCII character restrictions.  No Unicode transformations.  Use <code>{HEX}</code> to escape.</p>
+</div>
 <input id="unicode" autocomplete="off">
-<pre id="codepoints"></pre>
+<div id="codepoints"></div>
 <input id="punycode" autocomplete="off">
-<p id="dns"></p>
-<p id="browser"></p>
+<div id="readme">
+<ul>
+<li><b>NO</b> ASCII character restrictions.</li>
+<li><b>NO</b> Unicode transformations.</li>
+<li>Input <b>Unicode</b> (upper field) to generate Punycode.</li>
+<li>Input <b>Punycode</b> (lower field) to generate Unicode.</li>
+<li>Use <code>{HEX}</code> to escape Unicode.</li>
+<li>URL corresponds to currently selected field.</li>
+</ul>
+</div>
+<div id="dns"></div>
+<div id="browser"></div>
 <footer>Created by <a href="https://twitter.com/adraffy">raffy.eth</a></footer>
 <script type="module">
 import {puny_decode, puny_encode} from '../dist/index.min.js';
@@ -92,6 +123,9 @@ function same_array(a, b) {
 		&& a.every((x, i) => x === b[i]);
 }
 
+const PARAM_UNICODE = 'u';
+const PARAM_PUNYCODE = 'p';
+
 const PREFIX = 'xn--';
 
 const unicode_field = document.querySelector('#unicode');
@@ -99,16 +133,45 @@ const punycode_field = document.querySelector('#punycode');
 const codepoints_pre = document.querySelector('#codepoints');
 const dns_status = document.querySelector('#dns');
 const browser_status = document.querySelector('#browser');
+const readme_div = document.querySelector('#readme');
+const link_btn = document.querySelector('#link_btn');
+
+for (let btn of document.querySelectorAll('button')) {
+	btn.addEventListener('mousedown', e => e.preventDefault());
+}
 
 for (let btn of document.querySelectorAll('#examples button')) {
+	if (btn.id) continue;
 	btn.addEventListener('click', () => {
-		unicode_field.value = btn.innerHTML;
-		update_punycode();
+		if (btn.dataset.puny) {
+			punycode_field.value = btn.innerHTML;
+			update_unicode();
+		} else {
+			let {value: s, selectionStart: i, selectionEnd: e} = unicode_field;
+			// clear if not focused or replace and no selection
+			if (unicode_field !== document.activeElement || (btn.dataset.replace && i == e)) {
+				i = 0;
+				e = s.length;
+			}
+			unicode_field.value = s.slice(0, i) + btn.innerHTML + s.slice(e);
+			unicode_field.selectionEnd = unicode_field.value.length - (s.length - e);
+			update_punycode();
+		}
 	});
 }
 
+link_btn.addEventListener('click', () => {
+	navigator.clipboard.writeText(window.location);
+});
+
 unicode_field.addEventListener('input', update_punycode);
+unicode_field.addEventListener('focus', () => {
+	if (unicode_field.value) update_punycode();
+});
 punycode_field.addEventListener('input', update_unicode);
+punycode_field.addEventListener('focus', () => {
+	if (unicode_field.value) update_unicode();
+});
 
 punycode_field.addEventListener('keydown', e => {
 	if (e.key == 'Tab') {
@@ -117,12 +180,38 @@ punycode_field.addEventListener('keydown', e => {
 	}
 });
 
-show_placeholder(true);
+init();
+
+function init() {
+	let hash = window.location.hash.slice(1);
+	let pos = hash.indexOf('=');
+	if (pos == 1) {
+		let rest = decodeURIComponent(hash.slice(2));
+		switch (hash.slice(0, 1)) {
+			case PARAM_PUNYCODE: {
+				punycode_field.value = rest;
+				update_unicode();
+				return;
+			}
+			case PARAM_UNICODE: {
+				unicode_field.value = rest;
+				update_punycode();
+				return;
+			}
+		}
+	}
+	show_placeholder(true);
+}
+
+function update_url(param, value) {
+	window.history.replaceState(null, null, `#${param}=${value}`);	
+}
 
 function show_placeholder(b) {
-	unicode_field.placeholder = b ? '💩' : '';
-	punycode_field.placeholder = b ? 'xn--ls8h' : '';
+	unicode_field.placeholder = b ? 'Unicode: 💩' : '';
+	punycode_field.placeholder = b ? 'Punycode: xn--ls8h' : '';
 	codepoints_pre.classList.toggle('hide', b);
+	readme_div.classList.toggle('hide', !b);
 	if (b) {
 		unicode_field.value = '';
 		punycode_field.value = '';
@@ -130,25 +219,25 @@ function show_placeholder(b) {
 		punycode_field.classList.remove('error');
 		dns_status.classList.add('hide');
 		browser_status.classList.add('hide');
+		window.history.replaceState(null, null, ' ');
 	}
 }
 
 function update_punycode() {
 	let s = unicode_field.value;
-	if (!s) {
-		show_placeholder(true);
-		return;
-	}
+	if (!s) return show_placeholder(true);
 	show_placeholder(false);
+	update_url(PARAM_UNICODE, s);
+	unicode_field.focus();
 	try {
 		let cps = explode_cp(s.replace(/\{([^\}]+)\}/ug, (_, x) => {
 			if (!/^[0-9a-f]+$/i.test(x)) {
-				throw new Error(`Invalid Escape: ${x}`);
+				throw new Error(`Invalid Escape Sequence: ${x}`);
 			}
 			try {
 				return String.fromCodePoint(parseInt(x, 16)); 
 			} catch (err) {
-				throw new Error(`Invalid Unicode: ${x}`);	
+				throw new Error(`Invalid Unicode Codepoint: ${x}`);	
 			}
 		}));
 		let encoded = puny_encode(cps);
@@ -157,7 +246,7 @@ function update_punycode() {
 		} else {
 			punycode_field.value = PREFIX + String.fromCodePoint(...encoded);
 		}
-		update_codepoints(cps);		
+		update_codepoints(cps);
 	} catch (err) {
 		punycode_field.value = '';
 		show_error(err.message);
@@ -166,11 +255,10 @@ function update_punycode() {
 
 function update_unicode() {
 	let s = punycode_field.value;
-	if (!s) {
-		show_placeholder(true);
-		return;
-	}	
+	if (!s) return show_placeholder(true);
 	show_placeholder(false);
+	update_url(PARAM_PUNYCODE, s);
+	punycode_field.focus();
 	try {
 		let decoded;
 		if (s.startsWith(PREFIX)) {
@@ -189,7 +277,7 @@ function update_unicode() {
 
 function show_error(error) {
 	codepoints_pre.classList.add('error');
-	codepoints_pre.innerHTML = error;
+	codepoints_pre.innerHTML = `⚠️ <b>Error:</b> ${error}`;
 	dns_status.classList.add('hide');
 	browser_status.classList.add('hide');
 }
@@ -199,8 +287,8 @@ function update_codepoints(cps) {
 	codepoints_pre.classList.remove('error');
 
 	let puny = punycode_field.value;
-	let regex = /^[a-z0-9-.]+$/i;
-	dns_status.innerHTML = `<b>DNS Compatibility:</b> ${regex.test(puny) ? '✅' : '❌'}`;
+	let regex = /^[a-z0-9-]+$/i;
+	dns_status.innerHTML = `<b>DNS Encodable:</b> ${regex.test(puny) ? '✅' : '❌'}`;
 	dns_status.classList.remove('hide');
 
 	let state;

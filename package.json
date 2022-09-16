@@ -1,13 +1,13 @@
 {
 	"name": "@adraffy/punycode",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Low-level Punycode encoder/decoder without IDNA",
 	"keywords": [
 		"Punycode"
 	],
-	"main": "index.js",
-	"browser": "dist/index.min.js",
 	"type": "module",
+	"main": "index.js",
+	"files": ["./dist", "*.d.ts"],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/adraffy/punycode.js.git"
