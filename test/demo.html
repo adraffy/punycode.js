@@ -136,10 +136,6 @@ const browser_status = document.querySelector('#browser');
 const readme_div = document.querySelector('#readme');
 const link_btn = document.querySelector('#link_btn');
 
-for (let btn of document.querySelectorAll('button')) {
-	btn.addEventListener('mousedown', e => e.preventDefault());
-}
-
 for (let btn of document.querySelectorAll('#examples button')) {
 	if (btn.id) continue;
 	btn.addEventListener('click', () => {
