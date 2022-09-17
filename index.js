@@ -135,7 +135,7 @@ function encode(cps, prefixed) {
 }
 
 // check for "xn--"
-function has_prefix(v) {
+function has_label_ext(v) {
 	return v.length >= 4 
 		&& (v[0] == CP_X || v[0] == 88) // xX
 		&& (v[1] == CP_N || v[1] == 78) // nN
@@ -150,18 +150,18 @@ export function puny_decoded(x) {
 	if (typeof x === 'string') {
 		let cps = explode_cp(x);
 		if (cps.every(cp => cp < MIN_CP)) {
-			if (!has_prefix(cps)) return x; // return as-is
-			return String.fromCodePoint(...decode(cps.slice(4)));
+			if (!has_label_ext(cps)) return x; // return as-is
+			return decode_str(cps.slice(4));
 		}
-	} else if (ArrayBuffer.isView(x)) {
+	} else if (ArrayBuffer.isView(x)) { // this is safe for all views, we just need [0,127]
 		if (x.every(cp => cp >= 0 && cp < MIN_CP)) {
-			if (!has_prefix(x)) return String.fromCharCode(...x); // pure ascii
-			return String.fromCodePoint(...decode(x.subarray(4)));
+			if (!has_label_ext(x)) return String.fromCharCode(...x); // pure ascii
+			return decode_str(x.subarray(4));
 		}
 	} else if (Array.isArray(x)) {
 		if (x.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MIN_CP)) {
-			if (!has_prefix(x)) return String.fromCharCode(...x); // pure ascii
-			return String.fromCodePoint(...decode(x.slice(4)));
+			if (!has_label_ext(x)) return String.fromCharCode(...x); // pure ascii
+			return decode_str(x.slice(4));
 		}
 	}
 	throw new TypeError(`expected ASCII`);
@@ -184,6 +184,10 @@ export function puny_decode(cps) {
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-6.2
 // does not restrict ascii part
+// does not validate input (unsafe)
+function decode_str(cps) {
+	return String.fromCodePoint(...decode(cps));
+}
 function decode(cps) {
 	let pos = cps.lastIndexOf(CP_HYPHEN) + 1; // start or past last hyphen
 	let end = Math.max(0, pos - 1); // empty or before hyphen

@@ -58,6 +58,7 @@ footer {
 }
 #readme {
 	background: #ffc;
+	font-size: 14pt;
 }
 #readme li + li {
 	margin-top: 5px;
@@ -84,13 +85,12 @@ footer {
 <button id="link_btn">Copy Link</button>
 <div id="examples">
 <button data-puny="1">xn--w77hd</button>
-<button>💩</button>
 <button>👩🏽‍⚕</button>
 <button>👩🏽⚕</button>
 <button>🚴‍♂️</button>
 <button>🚴♂</button>
-<button data-replace="1">😵‍💫😵‍💫😵‍💫</button>
-<button data-replace="1">😵💫😵💫😵💫</button>
+<button>😵‍💫😵‍💫😵‍💫</button>
+<button>😵💫😵💫😵💫</button>
 </div>
 </div>
 <input id="unicode" autocomplete="off">
@@ -100,17 +100,18 @@ footer {
 <ul>
 <li><b>NO</b> ASCII character restrictions.</li>
 <li><b>NO</b> Unicode transformations.</li>
+<li>Operates on a <b>single</b> label.</li>
 <li>Input <b>Unicode</b> (upper field) to generate Punycode.</li>
 <li>Input <b>Punycode</b> (lower field) to generate Unicode.</li>
 <li>Use <code>{HEX}</code> to escape Unicode.</li>
-<li>URL corresponds to currently selected field.</li>
+<li>Page URL corresponds to currently selected field.</li>
 </ul>
 </div>
 <div id="dns"></div>
 <div id="browser"></div>
 <footer>Created by <a href="https://twitter.com/adraffy">raffy.eth</a></footer>
 <script type="module">
-import {puny_decode, puny_encode} from '../dist/index.min.js';
+import {puny_decoded, puny_encoded} from '../dist/index.min.js';
 
 function explode_cp(s) {
 	return [...s].map(x => x.codePointAt(0));
@@ -125,8 +126,6 @@ function same_array(a, b) {
 
 const PARAM_UNICODE = 'u';
 const PARAM_PUNYCODE = 'p';
-
-const PREFIX = 'xn--';
 
 const unicode_field = document.querySelector('#unicode');
 const punycode_field = document.querySelector('#punycode');
@@ -143,14 +142,7 @@ for (let btn of document.querySelectorAll('#examples button')) {
 			punycode_field.value = btn.innerHTML;
 			update_unicode();
 		} else {
-			let {value: s, selectionStart: i, selectionEnd: e} = unicode_field;
-			// clear if not focused or replace and no selection
-			if (unicode_field !== document.activeElement || (btn.dataset.replace && i == e)) {
-				i = 0;
-				e = s.length;
-			}
-			unicode_field.value = s.slice(0, i) + btn.innerHTML + s.slice(e);
-			unicode_field.selectionEnd = unicode_field.value.length - (s.length - e);
+			unicode_field.value = btn.innerHTML;
 			update_punycode();
 		}
 	});
@@ -164,6 +156,7 @@ unicode_field.addEventListener('input', update_punycode);
 unicode_field.addEventListener('focus', () => {
 	if (unicode_field.value) update_punycode();
 });
+
 punycode_field.addEventListener('input', update_unicode);
 punycode_field.addEventListener('focus', () => {
 	if (unicode_field.value) update_unicode();
@@ -217,12 +210,12 @@ function show_placeholder(b) {
 		browser_status.classList.add('hide');
 		window.history.replaceState(null, null, ' ');
 	}
+	return b;
 }
 
 function update_punycode() {
 	let s = unicode_field.value;
-	if (!s) return show_placeholder(true);
-	show_placeholder(false);
+	if (show_placeholder(!s)) return;
 	update_url(PARAM_UNICODE, s);
 	unicode_field.focus();
 	try {
@@ -236,12 +229,7 @@ function update_punycode() {
 				throw new Error(`Invalid Unicode Codepoint: ${x}`);	
 			}
 		}));
-		let encoded = puny_encode(cps);
-		if (encoded === cps) {
-			punycode_field.value = String.fromCodePoint(...cps);
-		} else {
-			punycode_field.value = PREFIX + String.fromCodePoint(...encoded);
-		}
+		punycode_field.value = puny_encoded(cps);
 		update_codepoints(cps);
 	} catch (err) {
 		punycode_field.value = '';
@@ -251,20 +239,13 @@ function update_punycode() {
 
 function update_unicode() {
 	let s = punycode_field.value;
-	if (!s) return show_placeholder(true);
-	show_placeholder(false);
+	if (show_placeholder(!s)) return;
 	update_url(PARAM_PUNYCODE, s);
 	punycode_field.focus();
 	try {
-		let decoded;
-		if (s.startsWith(PREFIX)) {
-			decoded = puny_decode(explode_cp(s.slice(4)));
-			unicode_field.value = String.fromCodePoint(...decoded);
-		} else {
-			decoded = explode_cp(s);
-			unicode_field.value = s;
-		}
-		update_codepoints(decoded);
+		let decoded = puny_decoded(s);
+		unicode_field.value = decoded;
+		update_codepoints(explode_cp(decoded));
 	} catch (err) {
 		unicode_field.value = '';
 		show_error(err.message);
@@ -282,24 +263,17 @@ function update_codepoints(cps) {
 	codepoints_pre.innerHTML = cps.length ? cps.map(cp => `{${cp.toString(16).toUpperCase()}}`).join('') : '<i>empty string</i>';
 	codepoints_pre.classList.remove('error');
 
-	let puny = punycode_field.value;
-	let regex = /^[a-z0-9-]+$/i;
-	dns_status.innerHTML = `<b>DNS Encodable:</b> ${regex.test(puny) ? '✅' : '❌'}`;
+	dns_status.innerHTML = `<b>DNS Encodable:</b> ${/^[a-z0-9-]+$/i.test(punycode_field.value) ? '✅' : '❌'}`;
 	dns_status.classList.remove('hide');
 
 	let state;
 	try {
 		let name = String.fromCodePoint(...cps);
 		let browser = new URL(`http://${name}`).hostname;
-		let decoded = browser.startsWith('xn--') ? String.fromCodePoint(...puny_decode(explode_cp(browser.slice(4)))) : browser;
 		if (name === browser) {
 			state = `✅ Verbatim`;
 		} else {
-			let decoded = browser;
-			let prefixed = browser.startsWith('xn--');
-			if (prefixed) {
-				decoded = String.fromCodePoint(...puny_decode(explode_cp(browser.slice(4))));
-			}
+			let decoded = puny_decoded(browser);
 			if (name === decoded) {
 				state = '✅ Punycodes correctly';
 			} else {
