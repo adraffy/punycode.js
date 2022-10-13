@@ -159,7 +159,7 @@ console.log('PASS tests');
 // create random puny encodings that decode
 // then require that the encoding matches
 let chars = explode_cp('abcdefghijklmnopqrstuvwxyz0123456789');
-for (let r = 0; r < 10000; r++) {
+for (let r = 0; r < 100_000; r++) {
 	let enc0, dec;
 	while (true) {
 		try {

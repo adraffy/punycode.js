@@ -86,7 +86,8 @@ export function puny_encoded(x) {
 // if encoded, returns new array
 // if encoded and add_prefix, prepends "xn--"
 export function puny_encode(cps, prefixed) {
-	if (!Array.isArray(cps) || !cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MAX_CP)) {
+	if (!Array.isArray(cps) || !cps.every(cp => cp >= 0 && cp <= MAX_CP)) {
+		console.log(cps.map(cp => [cp, cp & MAX_CP]));
 		throw new TypeError(`expected array of Unicode codepoints`);
 	}
 	return encode(cps, prefixed);
@@ -159,7 +160,7 @@ export function puny_decoded(x) {
 			return decode_str(x.subarray(4));
 		}
 	} else if (Array.isArray(x)) {
-		if (x.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MIN_CP)) {
+		if (x.every(cp => cp >= 0 && cp < MIN_CP)) {
 			if (!has_label_ext(x)) return String.fromCharCode(...x); // pure ascii
 			return decode_str(x.slice(4));
 		}
@@ -175,7 +176,7 @@ export function puny_decode(cps) {
 			return decode(cps);
 		}
 	} else if (Array.isArray(cps)) {
-		if (cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MIN_CP)) {
+		if (cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp < MIN_CP)) {
 			return decode(cps);
 		}
 	}

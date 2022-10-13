@@ -91,6 +91,7 @@ footer {
 <button>🚴♂</button>
 <button>😵‍💫😵‍💫😵‍💫</button>
 <button>😵💫😵💫😵💫</button>
+<label><input id="stop_check" type="checkbox" checked>Split on Stop <code>(.)</code></label>
 </div>
 </div>
 <input id="unicode" autocomplete="off">
@@ -133,7 +134,10 @@ const codepoints_pre = document.querySelector('#codepoints');
 const dns_status = document.querySelector('#dns');
 const browser_status = document.querySelector('#browser');
 const readme_div = document.querySelector('#readme');
+const stop_check = document.querySelector('#stop_check');
 const link_btn = document.querySelector('#link_btn');
+
+let last_updater = update_punycode;
 
 for (let btn of document.querySelectorAll('#examples button')) {
 	if (btn.id) continue;
@@ -151,6 +155,8 @@ for (let btn of document.querySelectorAll('#examples button')) {
 link_btn.addEventListener('click', () => {
 	navigator.clipboard.writeText(window.location);
 });
+
+stop_check.addEventListener('input', last_updater);
 
 unicode_field.addEventListener('input', update_punycode);
 unicode_field.addEventListener('focus', () => {
@@ -214,12 +220,13 @@ function show_placeholder(b) {
 }
 
 function update_punycode() {
+	last_updater = update_punycode;
 	let s = unicode_field.value;
 	if (show_placeholder(!s)) return;
 	update_url(PARAM_UNICODE, s);
 	unicode_field.focus();
 	try {
-		let cps = explode_cp(s.replace(/\{([^\}]+)\}/ug, (_, x) => {
+		let input = s.replace(/\{([^\}]+)\}/ug, (_, x) => {
 			if (!/^[0-9a-f]+$/i.test(x)) {
 				throw new Error(`Invalid Escape Sequence: ${x}`);
 			}
@@ -228,22 +235,38 @@ function update_punycode() {
 			} catch (err) {
 				throw new Error(`Invalid Unicode Codepoint: ${x}`);	
 			}
-		}));
-		punycode_field.value = puny_encoded(cps);
-		update_codepoints(cps);
+		});
+		punycode_field.value = encode(input);
+		update_codepoints(explode_cp(input));
 	} catch (err) {
 		punycode_field.value = '';
 		show_error(err.message);
 	}
 }
 
+function encode(s) {
+	if (stop_check.checked) {
+		return s.split('.').map(x => puny_encoded(x)).join('.');
+	} else {
+		return puny_encoded(s);
+	}
+}
+function decode(s) {
+	if (stop_check.checked) {
+		return s.split('.').map(x => puny_decoded(x)).join('.');
+	} else {
+		return puny_decoded(s);
+	}
+}
+
 function update_unicode() {
-	let s = punycode_field.value;
-	if (show_placeholder(!s)) return;
-	update_url(PARAM_PUNYCODE, s);
+	last_updater = update_unicode;
+	let input = punycode_field.value;
+	if (show_placeholder(!input)) return;
+	update_url(PARAM_PUNYCODE, input);
 	punycode_field.focus();
 	try {
-		let decoded = puny_decoded(s);
+		let decoded = decode(input);
 		unicode_field.value = decoded;
 		update_codepoints(explode_cp(decoded));
 	} catch (err) {
@@ -259,11 +282,14 @@ function show_error(error) {
 	browser_status.classList.add('hide');
 }
 
+// xn--w77hd.xn--w77hd.xn--w77hd
+// xn--w77hd.xn--w77hd.xn--w77hd
+
 function update_codepoints(cps) {
 	codepoints_pre.innerHTML = cps.length ? cps.map(cp => `{${cp.toString(16).toUpperCase()}}`).join('') : '<i>empty string</i>';
 	codepoints_pre.classList.remove('error');
 
-	dns_status.innerHTML = `<b>DNS Encodable:</b> ${/^[a-z0-9-]+$/i.test(punycode_field.value) ? '✅' : '❌'}`;
+	dns_status.innerHTML = `<b>DNS Encodable:</b> ${/^[a-z0-9-\.]+$/i.test(punycode_field.value) ? '✅' : '❌'}`;
 	dns_status.classList.remove('hide');
 
 	let state;
@@ -273,7 +299,7 @@ function update_codepoints(cps) {
 		if (name === browser) {
 			state = `✅ Verbatim`;
 		} else {
-			let decoded = puny_decoded(browser);
+			let decoded = decode(browser);
 			if (name === decoded) {
 				state = '✅ Punycodes correctly';
 			} else {
