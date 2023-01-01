@@ -87,7 +87,6 @@ export function puny_encoded(x) {
 // if encoded and add_prefix, prepends "xn--"
 export function puny_encode(cps, prefixed) {
 	if (!Array.isArray(cps) || !cps.every(cp => cp >= 0 && cp <= MAX_CP)) {
-		console.log(cps.map(cp => [cp, cp & MAX_CP]));
 		throw new TypeError(`expected array of Unicode codepoints`);
 	}
 	return encode(cps, prefixed);

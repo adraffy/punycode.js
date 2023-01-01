@@ -1,6 +1,6 @@
 {
 	"name": "@adraffy/punycode",
-	"version": "0.0.3",
+	"version": "1.0.0",
 	"description": "Low-level Punycode encoder/decoder without IDNA",
 	"keywords": [
 		"Punycode"
