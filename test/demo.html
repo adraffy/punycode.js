@@ -19,6 +19,9 @@ header {
 	display: flex;
 	justify-content: space-between;
 }
+label > span {
+	user-select: none;
+}
 button {
 	cursor: pointer;
 }
@@ -30,22 +33,38 @@ input {
 	padding: 0.5rem;
 	font-size: 16pt;
 }
+#actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+#actions button {
+	padding: 0.25rem;
+	white-space: pre;
+}
 #examples {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 3px;
 }
 #codepoints {
-	white-space: pre-wrap;
-	font: 12pt monospace;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }
-#codepoints.error {
+#codepoints > span {
+	font-size: 16pt;
+}
+#codepoints > code {
+	font-size: 12pt;
+}
+#error {
 	background: #fcc;
 	color: #c00;
 	padding: 10px;
 	border: 3px dashed #f00;
 }
-#codepoints span {
+.surrogate {
 	color: #800;
 	background-color: #fcc;
 }
@@ -67,9 +86,6 @@ code.boxed {
 #readme li + li {
 	margin-top: 5px;
 }
-#link_btn {
-	float: right;
-}
 @media only screen and (max-width: 800px) { 
 	body {
 		margin: 1rem;
@@ -85,24 +101,30 @@ code.boxed {
 <h1><a href="https://datatracker.ietf.org/doc/html/rfc3492">Punycode</a> Coder</h1>
 <a href="https://github.com/adraffy/punycode.js">@adraffy/punycode.js</a>
 </header>
-<div>
-<button id="link_btn">Copy Link</button>
 <div id="examples">
-<button data-puny="1">xn--w77hd</button>
-<button data-puny="1">xn--yp9h</button>
-<button data-puny="1">xn--9c9bq2g</button>
-<button>💩</button>
-<button>👩🏽‍⚕</button>
-<button>👩🏽⚕</button>
-<button>🚴‍♂️</button>
-<button>🚴♂</button>
-<button>😵‍💫😵‍💫😵‍💫</button>
-<button>😵💫😵💫😵💫</button>
-<label><input id="stop_check" type="checkbox" checked>Split on Stop <code>(.)</code></label>
+	<button data-puny="1">xn--w77hd</button>
+	<button data-puny="1">xn--yp9h</button>
+	<button data-puny="1">xn--9c9bq2g</button>
+	<button>💩</button>
+	<button>👩🏽‍⚕</button>
+	<button>👩🏽⚕</button>
+	<button>🚴‍♂️</button>
+	<button>🚴♂</button>
+	<button>😵‍💫😵‍💫😵‍💫</button>
+	<button>😵💫😵💫😵💫</button>
 </div>
+<div id="actions">
+	<label><input id="stop_check" type="checkbox" checked><span>Split on Stop <code>(.)</code></span></label>
+	<div style="flex: 1"></div>
+	<button id="escape_btn">Escape</button>
+	<button id="link_btn">Copy Link</button>	
 </div>
 <input id="unicode" autocomplete="off">
-<div id="codepoints"></div>
+<div id="codepoints" class="hide">
+	<span></span>
+	<code></code>
+</div>
+<div id="error" class="hide"></div>
 <input id="punycode" autocomplete="off">
 <div id="readme" class="hide">
 <ul>
@@ -113,6 +135,7 @@ code.boxed {
 <li>Input <b>Punycode</b> (lower field) to generate Unicode.</li>
 <li>Use <code>{HEX}</code> to escape Unicode.</li>
 <li>Page URL corresponds to currently selected field.</li>
+<li><a href="https://unicode.org/faq/utf_bom.html">Surrogates</a> are shown in red: <code>{<span class="surrogate">DFFF</span>}</code></li>
 </ul>
 </div>
 <div id="dns" class="hide">
@@ -133,13 +156,13 @@ const PARAM_PUNYCODE = 'p';
 
 const unicode_field = document.querySelector('#unicode');
 const punycode_field = document.querySelector('#punycode');
-const codepoints_pre = document.querySelector('#codepoints');
+const error_div = document.querySelector('#error');
+const codepoints_div = document.querySelector('#codepoints');
 const dns_status = document.querySelector('#dns');
 const browser_status = document.querySelector('#browser');
 const reverse_status = document.querySelector('#reverse');
 const readme_div = document.querySelector('#readme');
 const stop_check = document.querySelector('#stop_check');
-const link_btn = document.querySelector('#link_btn');
 
 let using_unicode = true;
 
@@ -156,29 +179,34 @@ for (let btn of document.querySelectorAll('#examples button')) {
 	});
 }
 
-link_btn.addEventListener('click', () => {
+document.querySelector('#link_btn').addEventListener('click', () => {
 	navigator.clipboard.writeText(window.location);
 });
-
+document.querySelector('#escape_btn').addEventListener('click', () => {
+	let s0 = unicode_field.value;
+	let s1 = replace_escapes(s0);
+	let s2 = apply_escapes(s1, false);
+	let s3 = apply_escapes(s1, true);
+	let set = [...new Set([s1, s2, s3])];
+	let pos = set.indexOf(s0);	
+	unicode_field.value = set[(pos + 1) % set.length];
+	update_using_unicode();
+});
 stop_check.addEventListener('input', update_ux);
-
 unicode_field.addEventListener('input', update_using_unicode);
 unicode_field.addEventListener('focus', () => {
 	if (unicode_field.value) update_using_unicode();
 });
-
 punycode_field.addEventListener('input', update_using_punycode);
 punycode_field.addEventListener('focus', () => {
 	if (unicode_field.value) update_using_punycode();
 });
-
 punycode_field.addEventListener('keydown', e => {
 	if (e.key == 'Tab') {
 		e.preventDefault();
 		unicode_field.select(); // muhaha
 	}
 });
-
 init();
 
 function init() {
@@ -199,38 +227,12 @@ function init() {
 			}
 		}
 	}
-	show_placeholder();
+	update_ux();
 }
 
 function update_url(param, value) {
 	window.history.replaceState(null, null, `#${param}=${value}`);	
 }
-
-function set_empty(b) {
-	unicode_field.placeholder = b ? 'Unicode: 💩' : '';
-	punycode_field.placeholder = b ? 'Punycode: xn--ls8h' : '';
-	codepoints_pre.classList.toggle('hide', b);
-	readme_div.classList.toggle('hide', !b);
-	reverse_status.classList.add('hide');
-	browser_status.classList.add('hide');
-	dns_status.classList.add('hide');
-}
-function show_placeholder() {
-	set_empty(true);
-	unicode_field.value = '';
-	punycode_field.value = '';
-	unicode_field.classList.remove('error');
-	punycode_field.classList.remove('error');
-	dns_status.classList.add('hide');
-	browser_status.classList.add('hide');
-	window.history.replaceState(null, null, ' ');
-}
-function show_error(error) {
-	codepoints_pre.classList.add('error');
-	codepoints_pre.classList.remove('hide');
-	codepoints_pre.innerHTML = `⚠️ <b>Error:</b> ${error}`;
-}
-
 
 function update_using_punycode() {
 	using_unicode = false;
@@ -245,26 +247,43 @@ function update_ux() {
 	let input  = (using_unicode ? unicode_field : punycode_field);
 	let output = (using_unicode ? punycode_field : unicode_field);
 	input.focus();
+	
+	reverse_status.classList.add('hide');
+	browser_status.classList.add('hide');
+	dns_status.classList.add('hide');
+	codepoints_div.classList.add('hide');
+	error_div.classList.add('hide');
+
 	try {
 		let name = input.value;
 		if (!name) {
-			show_placeholder();
+			unicode_field.placeholder = 'Unicode: 💩';
+			punycode_field.placeholder = 'Punycode: xn--ls8h';
+			output.value = '';
+			window.history.replaceState(null, null, ' ');
+			readme_div.classList.remove('hide');
 			return;
 		}	
+
+		readme_div.classList.add('hide');
+		unicode_field.placeholder = '';
+		punycode_field.placeholder = '';
+
+		let code = codepoints_div.querySelector('code');
 		if (using_unicode) {
 			name = replace_escapes(name);
 			output.value = split_labels(name).map(s => puny_encoded(s)).join('.');
 			update_url(PARAM_UNICODE, name);
-			codepoints_pre.innerHTML = '⬇️ ' + split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
+			code.innerHTML = split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
 		} else {
 			output.value = split_labels(name).map(s => String.fromCodePoint(...puny_decoded(s))).join('.');
 			update_url(PARAM_PUNYCODE, name);
-			codepoints_pre.innerHTML = '⬆️ ' + split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
+			code.innerHTML = split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
 		}
-		set_empty(false);
 		
-		codepoints_pre.classList.remove('error');
-
+		codepoints_div.querySelector('span').innerHTML = using_unicode ? '⬇️' : '⬆️';
+		codepoints_div.classList.remove('hide');
+		
 		dns_status.querySelector('.inner').innerHTML = get_hostname_state(punycode_field.value);
 		dns_status.classList.remove('hide');
 
@@ -279,9 +298,13 @@ function update_ux() {
 	} catch (err) {
 		console.log(err);
 		output.value = '';
-		show_error(err.message);
+		output.placeholder = `???`;
+		output.classList.add('error');
+		error_div.innerHTML = `⚠️ <b>Error:</b> ${err.message}`;
+		error_div.classList.remove('hide');
 	}
 }
+
 
 function split_labels(name) {
 	if (stop_check.checked) {
@@ -303,8 +326,10 @@ function get_punycode_state(uni, puny) {
 	let reverse = split_labels(uni).map(puny_encoded).join('.');
 	if (reverse === puny) {
 		return '✅';
-	} else {
+	} else if (reverse) {
 		return `❌ Expected: <code class="boxed">${reverse}</code>`;
+	} else {
+		return '❌';
 	}
 }
 
@@ -334,6 +359,12 @@ function is_RFC1123(name) {
 	return name.split('.').every(s => !s.startsWith('-') && !s.endsWith('-') && s.length < 64);
 }
 
+function apply_escapes(s, forced) {
+	return explode_cp(s).map(cp => {
+		if (!forced && (cp >= 0x21 && cp <= 0x7E)) return String.fromCodePoint(cp);
+		return `{${hex_cp(cp)}}`;
+	}).join('');
+}
 function replace_escapes(s) {
 	return s.replace(/\{([^\}]+)\}/ug, (_, x) => {
 		if (!/^[0-9a-f]+$/i.test(x)) {
@@ -347,11 +378,15 @@ function replace_escapes(s) {
 	});
 }
 
+function hex_cp(cp) {
+	return cp.toString(16).padStart(2, '0').toUpperCase();
+}
+
 function make_exploded_html(cps) {
 	return cps.map(cp => {
-		let s = cp.toString(16).toUpperCase(); 
+		let s = hex_cp(cp); 
 		if (is_surrogate(cp)) {
-			s = `<span>${s}</span>`;
+			s = `<span class="surrogate">${s}</span>`;
 		}
 		return `{${s}}`;
 	}).join('');
