@@ -249,11 +249,11 @@ function update_ux() {
 			name = replace_escapes(name);
 			output.value = split_labels(name).map(s => puny_encoded(s)).join('.');
 			update_url(PARAM_UNICODE, name);
-			codepoints_pre.innerHTML = '🡇 ' + split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
+			codepoints_pre.innerHTML = '⬇️ ' + split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
 		} else {
 			output.value = split_labels(name).map(s => String.fromCodePoint(...puny_decoded(s))).join('.');
 			update_url(PARAM_PUNYCODE, name);
-			codepoints_pre.innerHTML = '🡅 ' + split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
+			codepoints_pre.innerHTML = '⬆️ ' + split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
 		}
 		set_empty(false);
 		
