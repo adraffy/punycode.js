@@ -36,6 +36,11 @@ puny_encoded_bytes([0x1F4A9]); // [0x78,0x6E,0x2D,0x2D,0x6C,0x73,0x38,0x68]
 puny_decoded([0x61,0x62,0x63]); // [0x61,0x62,0x63]
 puny_decoded('xn--ls8h'); // [0x1F4A9]
 puny_decoded('ls8h', true); // [0x1F4A9]
+
+// to convert decoded to sting: 
+String.fromCodePoint(...puny_decoded('xn--ls8h')); // "💩"
+// note: you should check for surrogates
+// note: you should check: decoded(encoded(decoded(x))) == x
 ```
 
 ## Build
