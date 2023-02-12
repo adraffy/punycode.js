@@ -53,7 +53,7 @@ footer {
 	text-align: center;
 	color: #666;
 }
-code.big {
+code.boxed {
 	background: #fff;
 	padding: 3px 6px;
 	border: 1px solid #ccc;
@@ -115,9 +115,15 @@ code.big {
 <li>Page URL corresponds to currently selected field.</li>
 </ul>
 </div>
-<div id="dns" class="hide"></div>
-<div id="browser" class="hide"></div>
-<div id="reverse" class="hide"></div>
+<div id="dns" class="hide">
+	<b>DNS <a href="https://datatracker.ietf.org/doc/html/rfc1123">Hostname</a>:</b> <span class="inner"></span>
+</div>
+<div id="browser" class="hide">
+	<b>Browser <a href="https://url.spec.whatwg.org/">URL</a> Support:</b> <span class="inner"></span>
+</div>
+<div id="reverse" class="hide">
+	<b>Puny→Uni→Puny:</b> <span class="inner"></span>
+</div>
 <footer>Created by <a href="https://twitter.com/adraffy">raffy.eth</a></footer>
 <script type="module">
 import {puny_decoded, puny_encoded} from '../dist/index.min.js';
@@ -259,14 +265,14 @@ function update_ux() {
 		
 		codepoints_pre.classList.remove('error');
 
-		dns_status.innerHTML = `<b>DNS <a href="https://datatracker.ietf.org/doc/html/rfc1123">Hostname</a>:</b> ${get_hostname_state(punycode_field.value)}`;
+		dns_status.querySelector('.inner').innerHTML = get_hostname_state(punycode_field.value);
 		dns_status.classList.remove('hide');
 
-		browser_status.innerHTML = `<b>Browser <a href="https://url.spec.whatwg.org/">URL</a> Support:</b> ${get_url_state(unicode_field.value, punycode_field.value)}`;
+		browser_status.querySelector('.inner').innerHTML = get_url_state(unicode_field.value, punycode_field.value);
 		browser_status.classList.remove('hide');
 
 		if (!using_unicode) {
-			reverse_status.innerHTML = `<b>Puny→Uni→Puny:</b> ${get_punycode_state(unicode_field.value, punycode_field.value)}`;
+			reverse_status.querySelector('.inner').innerHTML = get_punycode_state(unicode_field.value, punycode_field.value);
 			reverse_status.classList.remove('hide');
 		}
 
@@ -298,7 +304,7 @@ function get_punycode_state(uni, puny) {
 	if (reverse === puny) {
 		return '✅';
 	} else {
-		return `❌ Expected: <code class="big">${reverse}</code>`;
+		return `❌ Expected: <code class="boxed">${reverse}</code>`;
 	}
 }
 
@@ -311,7 +317,7 @@ function get_url_state(uni, puny) {
 		let m0 = split_labels(puny).map(explode_cp);
 		let m1 = split_labels(browser).map(puny_decoded);
 		if (m0.length != m1.length || m0.some((v0, i) => same_array(v0, m1[i]))) {
-			return `⚠️ Mangled: <code class="big">${browser}</code>`;
+			return `⚠️ Mangled: <code class="boxed">${browser}</code>`;
 		}
 		return '✅ Punycodes correctly';
 	} catch (err) {
