@@ -70,37 +70,38 @@ function explode_cp(s) {
 	return [...s].map(x => x.codePointAt(0));
 }
 
-// number[]|str -> str 
-// prepends prefix if encoded
+// str|number[] -> str 
 export function puny_encoded(x) {
-	if (typeof x === 'string') {
+	if (typeof x === 'string') { 
 		let cps = explode_cp(x);
-		let enc = encode(cps, true);
+		let enc = encode(cps);
 		return cps === enc ? x : String.fromCharCode(...enc);
-	} else {
-		return String.fromCharCode(...puny_encode(x, true));
 	}
+	return String.fromCharCode(...puny_encoded_bytes(x));
 }
 
-// number[] -> number[] 
-// if encoded, returns new array
-// if encoded and add_prefix, prepends "xn--"
-export function puny_encode(cps, prefixed) {
-	if (!Array.isArray(cps) || !cps.every(cp => cp >= 0 && cp <= MAX_CP)) {
-		throw new TypeError(`expected array of Unicode codepoints`);
+// str|number[] -> number[]
+// note: always returns a copy
+export function puny_encoded_bytes(x) {
+	if (typeof x === 'string') {
+		return encode(explode_cp(x));
+	} else if (Array.isArray(x) && x.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MAX_CP)) {
+		let enc = encode(x);
+		return x == enc ? x.slice() : enc;
+	} else {
+		throw new Error(`expected Unicode`);
 	}
-	return encode(cps, prefixed);
 }
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-6.3
 // number[] -> number[]
 // does not restrict ascii [0, MIN_CP)
 // returns unchanged if not required
-function encode(cps, prefixed) {
+function encode(cps) {
 	let ret = cps.filter(cp => cp < MIN_CP);
 	let basic = ret.length;
 	if (basic == cps.length) return cps; // puny not needed
-	if (prefixed) ret.splice(0, 0, CP_X, CP_N, CP_HYPHEN, CP_HYPHEN);
+	ret.splice(0, 0, CP_X, CP_N, CP_HYPHEN, CP_HYPHEN);
 	if (basic) ret.push(CP_HYPHEN);
 	let cp0 = MIN_CP;
 	let bias = BIAS;
@@ -143,55 +144,33 @@ function has_label_ext(v) {
 		&& v[3] == CP_HYPHEN;
 }
 
-// number[]|Uint8Array|string -> string
-// decodes only if "xn--" is present
-// always returns string
-export function puny_decoded(x) {
+// string|TypedArray|number -> number[]
+// if not forced, decodes only if "xn--" is present
+// always returns array of codepoints
+export function puny_decoded(x, force) {
+	let cps;
 	if (typeof x === 'string') {
-		let cps = explode_cp(x);
-		if (cps.every(cp => cp < MIN_CP)) {
-			if (!has_label_ext(cps)) return x; // return as-is
-			return decode_str(cps.slice(4));
-		}
-	} else if (ArrayBuffer.isView(x)) { // this is safe for all views, we just need [0,127]
-		if (x.every(cp => cp >= 0 && cp < MIN_CP)) {
-			if (!has_label_ext(x)) return String.fromCharCode(...x); // pure ascii
-			return decode_str(x.subarray(4));
-		}
+		cps = explode_cp(x);
+	} else if (ArrayBuffer.isView(x)) {
+		cps = Array.from(x);
 	} else if (Array.isArray(x)) {
-		if (x.every(cp => cp >= 0 && cp < MIN_CP)) {
-			if (!has_label_ext(x)) return String.fromCharCode(...x); // pure ascii
-			return decode_str(x.slice(4));
+		cps = x.slice();
+	}
+	if (cps && cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp < MIN_CP)) {
+		if (!force) {
+			if (!has_label_ext(cps)) return cps;
+			cps = cps.slice(4);
 		}
+		return decode(cps);
 	}
 	throw new TypeError(`expected ASCII`);
 }
 
-// number[] -> number[]
-// assumes puny-encoding
-export function puny_decode(cps) {
-	if (ArrayBuffer.isView(cps)) {
-		if (cps.every(cp => cp >= 0 && cp < MIN_CP)) {
-			return decode(cps);
-		}
-	} else if (Array.isArray(cps)) {
-		if (cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp < MIN_CP)) {
-			return decode(cps);
-		}
-	}
-	throw new TypeError(`expected array of ASCII codepoints`);
-}
-
 // https://datatracker.ietf.org/doc/html/rfc3492#section-6.2
-// does not restrict ascii part
-// does not validate input (unsafe)
-function decode_str(cps) {
-	return String.fromCodePoint(...decode(cps));
-}
 function decode(cps) {
 	let pos = cps.lastIndexOf(CP_HYPHEN) + 1; // start or past last hyphen
 	let end = Math.max(0, pos - 1); // empty or before hyphen
-	let ret = ArrayBuffer.isView(cps) ? [...cps.subarray(0, end)] : cps.slice(0, end);
+	let ret = cps.slice(0, end);
 	let i = 0;
 	let cp = MIN_CP;
 	let bias = BIAS;

@@ -7,42 +7,35 @@
 [Demo](https://adraffy.github.io/punycode.js/test/demo.html)
 
 ```Javascript
-import {puny_encode, puny_decode} from '@adraffy/punycode';
+import {puny_encoded, puny_encoded_bytes, puny_decoded} from '@adraffy/punycode';
 // npm i @adraffy/punycode
-// browser: https://unpkg.com/@adraffy/punycode@latest/dist/index.min.js
+// browser: https://cdn.jsdelivr.net/npm/@adraffy/punycode@latest/dist/index.min.js
 
-// (number[], prefixed: bool) -> number[]
-// input any array of codepoints
-// returns same array (punycode not needed) or encoded codepoints 
-// if prefixed, prepends "xn--"
+// (string:number[]) -> string
+// input unicode string or codepoints
+// returns string with "xn--" if puny
 // throws on error
-puny_encode([65, 66, 67]);   // [65, 66, 67] <== same!
-puny_encode([128169]);       // [108, 115, 56, 104]
-puny_encode([128169], true); // [120, 110, 45, 45, 108, 115, 56, 104]
+puny_encoded('abc');  // "abc"
+puny_encoded([0x61,0x62,0x63]);  // "abc"
 
-// number[] -> number[]
-// input any known puny_encoded array of codepoints
-// eg. xn--<this part>
-// returns decoded codepoints 
+puny_encoded('💩'); // "xn--ls8h"
+puny_encoded([0x1F4A9]); // "xn--ls8h"
+
+// (string|number[]) -> number[]
+// input unicode string or codepoints
+// returns array of bytes with "xn--" (0x786E2D2D)
+// (always returns a copy)
 // throws on error
-puny_decode([108, 115, 56, 104]); // [128169]
-```
+puny_encoded_bytes("abc"); // [0x61,0x62,0x63]
+puny_encoded_bytes([0x1F4A9]); // [0x78,0x6E,0x2D,0x2D,0x6C,0x73,0x38,0x68]
 
-### Prefixed Strings
-```Javascript
-import {puny_encoded, puny_decoded} from '@adraffy/punycode';
-
-// string|number[] -> string
-puny_encoded("abc") == puny_encoded([65, 66, 67]) == "abc";
-puny_encoded("💩") == puny_encoded([128169]) == "xn--ls8h";
-
-// string|number[]|ArrayBufferView -> string
-puny_decoded("abc") == puny_decoded([65, 66, 67]) == "abc";
-
-// the following return "💩"
-puny_decoded("xn--ls8h");
-puny_decoded([120, 110, 45, 45, 108, 115, 56, 104]);
-puny_decoded(new Uint8Array([120, 110, 45, 45, 108, 115, 56, 104]));
+// (string|TypedArray|number[], force?:boolean) -> number[]
+// input ascii string or bytes
+// returns array of unicode codepoints
+// throws on error
+puny_decoded([0x61,0x62,0x63]); // [0x61,0x62,0x63]
+puny_decoded('xn--ls8h'); // [0x1F4A9]
+puny_decoded('ls8h', true); // [0x1F4A9]
 ```
 
 ## Build
