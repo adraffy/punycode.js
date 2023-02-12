@@ -280,7 +280,7 @@ function update_ux() {
 			update_url(PARAM_PUNYCODE, name);
 			code.innerHTML = split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
 		}
-		
+
 		codepoints_div.querySelector('span').innerHTML = using_unicode ? '⬇️' : '⬆️';
 		codepoints_div.classList.remove('hide');
 		
@@ -304,7 +304,6 @@ function update_ux() {
 		error_div.classList.remove('hide');
 	}
 }
-
 
 function split_labels(name) {
 	if (stop_check.checked) {
@@ -365,6 +364,7 @@ function apply_escapes(s, forced) {
 		return `{${hex_cp(cp)}}`;
 	}).join('');
 }
+
 function replace_escapes(s) {
 	return s.replace(/\{([^\}]+)\}/ug, (_, x) => {
 		if (!/^[0-9a-f]+$/i.test(x)) {

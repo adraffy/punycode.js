@@ -1,4 +1,4 @@
-import {puny_encoded, puny_decoded, puny_encoded_bytes} from '../index.js';
+import {puny_decoded, puny_encoded_bytes} from '../index.js';
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-7.1
 const TESTS = [
