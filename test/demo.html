@@ -250,10 +250,6 @@ function update_from_hash() {
 	update_ux();
 }
 
-function update_url(param, value) {
-	window.history.replaceState(null, null, `#${param}=${value}`);	
-}
-
 function update_using_punycode() {
 	using_unicode = false;
 	update_ux();
@@ -268,45 +264,44 @@ function update_ux() {
 	let output = (using_unicode ? punycode_field : unicode_field);
 	input.focus();
 	
+	error_div.classList.add('hide');
+	codepoints_div.classList.add('hide');
 	reverse_status.classList.add('hide');
 	browser_status.classList.add('hide');
 	dns_status.classList.add('hide');
-	codepoints_div.classList.add('hide');
-	error_div.classList.add('hide');
 
 	try {
 		let name = input.value;
+		readme_div.classList.toggle('hide', !!name);
 		if (!name) {
+			output.value = '';
 			unicode_field.placeholder = 'Unicode: 💩';
 			punycode_field.placeholder = 'Punycode: xn--ls8h';
-			output.value = '';
 			window.history.replaceState(null, null, ' ');
-			readme_div.classList.remove('hide');
 			return;
-		}	
+		}
+		window.history.replaceState(null, null, `#${using_unicode ? PARAM_UNICODE : PARAM_PUNYCODE}=${name}`);	
 
-		readme_div.classList.add('hide');
 		unicode_field.placeholder = '';
 		punycode_field.placeholder = '';
 
-		let code = codepoints_div.querySelector('code');
+		let output_fn, explode_fn;
 		if (using_unicode) {
 			name = replace_escapes(name);
-			update_url(PARAM_UNICODE, name);
-			output.value = split_labels(name).map(s => puny_encoded(s)).join('.');
-			code.innerHTML = split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
+			output_fn = puny_encoded;
+			explode_fn = explode_cp;
 		} else {
-			update_url(PARAM_PUNYCODE, name);
-			output.value = split_labels(name).map(s => String.fromCodePoint(...puny_decoded(s))).join('.');
-			code.innerHTML = split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
+			output_fn = s => String.fromCodePoint(...puny_decoded(s));
+			explode_fn = puny_decoded;
 		}
-
-		let puny = punycode_field.value;
-		let uni = replace_escapes(unicode_field.value);
-
+		output.value = split_labels(name).map(output_fn).join('.');
+		codepoints_div.querySelector('code').innerHTML = split_labels(name).map(s => make_exploded_html(explode_fn(s))).join('.');;
 		codepoints_div.querySelector('span').innerHTML = using_unicode ? '⬇️' : '⬆️';
 		codepoints_div.classList.remove('hide');
 		
+		let puny = punycode_field.value;
+		let uni = replace_escapes(unicode_field.value);
+
 		dns_status.querySelector('.inner').innerHTML = get_hostname_state(puny);
 		dns_status.classList.remove('hide');
 
@@ -319,7 +314,7 @@ function update_ux() {
 		}
 
 	} catch (err) {
-		console.log(err);
+		//console.log(err);
 		output.value = '';
 		output.placeholder = `???`;
 		output.classList.add('error');
