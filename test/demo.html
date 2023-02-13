@@ -68,6 +68,17 @@ input {
 	color: #800;
 	background-color: #fcc;
 }
+.zwj {
+	color: #fff;
+	background-color: #0aa;
+}
+.style {
+	color: #fff;
+	background-color: #aaa;
+}
+.ascii {
+	background-color: #fff;
+}
 footer {
 	text-align: center;
 	color: #666;
@@ -103,13 +114,16 @@ code.boxed {
 </header>
 <div id="examples">
 	<button data-puny="1">xn--w77hd</button>
-	<button data-puny="1">xn--yp9h</button>
-	<button data-puny="1">xn--9c9bq2g</button>
 	<button>💩</button>
-	<button>👩🏽‍⚕</button>
+	<button data-puny>xn--ls8h</button>
+	<button data-puny>xn--u86cy764b</button>
+	<button data-puny>xn--v86cw764b</button>
+	<button data-puny>xn--8c9by4f</button>
+	<button>👩🏽‍⚕️</button>
 	<button>👩🏽⚕</button>
 	<button>🚴‍♂️</button>
 	<button>🚴♂</button>
+	<button>👩‍❤️‍💋‍👨</button>
 	<button>😵‍💫😵‍💫😵‍💫</button>
 	<button>😵💫😵💫😵💫</button>
 </div>
@@ -149,7 +163,7 @@ code.boxed {
 </div>
 <footer>Created by <a href="https://twitter.com/adraffy">raffy.eth</a></footer>
 <script type="module">
-import {puny_decoded, puny_encoded} from '../dist/index.min.js';
+import {puny_decoded, puny_encoded, is_surrogate} from '../dist/index.min.js';
 
 const PARAM_UNICODE = 'u';
 const PARAM_PUNYCODE = 'p';
@@ -168,8 +182,12 @@ let using_unicode = true;
 
 for (let btn of document.querySelectorAll('#examples button')) {
 	if (btn.id) continue;
+	let puny = typeof btn.dataset.puny === 'string';
+	if (puny) {
+		btn.title = String.fromCodePoint(...puny_decoded(btn.innerHTML));
+	}
 	btn.addEventListener('click', () => {
-		if (btn.dataset.puny) {
+		if (puny) {
 			punycode_field.value = btn.innerHTML;
 			update_using_punycode();
 		} else {
@@ -281,17 +299,20 @@ function update_ux() {
 			code.innerHTML = split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
 		}
 
+		let puny = punycode_field.value;
+		let uni = replace_escapes(unicode_field.value);
+
 		codepoints_div.querySelector('span').innerHTML = using_unicode ? '⬇️' : '⬆️';
 		codepoints_div.classList.remove('hide');
 		
-		dns_status.querySelector('.inner').innerHTML = get_hostname_state(punycode_field.value);
+		dns_status.querySelector('.inner').innerHTML = get_hostname_state(puny);
 		dns_status.classList.remove('hide');
 
-		browser_status.querySelector('.inner').innerHTML = get_url_state(unicode_field.value, punycode_field.value);
+		browser_status.querySelector('.inner').innerHTML = get_url_state(uni, puny);
 		browser_status.classList.remove('hide');
 
 		if (!using_unicode) {
-			reverse_status.querySelector('.inner').innerHTML = get_punycode_state(unicode_field.value, punycode_field.value);
+			reverse_status.querySelector('.inner').innerHTML = get_punycode_state(uni, puny);
 			reverse_status.classList.remove('hide');
 		}
 
@@ -384,16 +405,22 @@ function hex_cp(cp) {
 
 function make_exploded_html(cps) {
 	return cps.map(cp => {
-		let s = hex_cp(cp); 
+		let rep = hex_cp(cp);
+		let cls;
 		if (is_surrogate(cp)) {
-			s = `<span class="surrogate">${s}</span>`;
+			cls = 'surrogate';
+		} else if (cp === 0x200C || cp === 0x200D) {
+			cls = 'zwj';
+		} else if (cp === 0xFE0F || cp === 0xFE0E) {
+			cls = 'style'
+		} else if (cp < 0x80) {
+			cls = 'ascii';
 		}
-		return `{${s}}`;
+		if (cls) {
+			rep = `<span class="${cls}">${rep}</span>`;
+		}
+		return `{${rep}}`;
 	}).join('');
-}
-
-function is_surrogate(cp) {
-	return (cp >= 0xD800 && cp <= 0xDB7F) || (cp >= 0xDC00 && cp <= 0xDFFF);
 }
 
 function explode_cp(s) {
@@ -406,7 +433,6 @@ function same_array(a, b) {
 		&& a.length === b.length 
 		&& a.every((x, i) => x === b[i]);
 }
-
 </script>
 </body>
 </html>

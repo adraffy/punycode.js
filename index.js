@@ -196,3 +196,8 @@ function decode(cps) {
 	}	
 	return ret;
 }
+
+// https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G2630
+export function is_surrogate(cp) {
+	return cp >= 0xD800 && cp <= 0xDFFF;
+}
