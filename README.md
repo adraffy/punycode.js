@@ -18,7 +18,7 @@ import {puny_encoded, puny_decoded, puny_encoded_bytes, is_surrogate} from '@adr
 puny_encoded('💩'); // "xn--ls8h"
 puny_encoded([0x1F4A9]); // "xn--ls8h"
 
-// ntoe: pure ascii does not need encoded:
+// pure ascii does not need encoded:
 puny_encoded('abc');  // "abc"
 puny_encoded([0x61,0x62,0x63]); // "abc"
 
@@ -56,10 +56,13 @@ str0 === String.fromCodePoint(...dec1); // true
 
 // check "roundtrip" (recommended)
 // decoded(encoded(decoded(x))) == x
-if (puny !== puny_decoded(puny_encoded(puny_decoded(puny)))) throw new Error('roundtrip mismatch');
-
+if (puny !== puny_decoded(puny_encoded(puny_decoded(puny)))) {
+	throw new Error('roundtrip mismatch');
+}
 // or, check for surrogates:
-if (decoded.some(is_surrogate)) throw new Error('contains surrogates');
+if (decoded.some(is_surrogate)) {
+	throw new Error('contains surrogates');
+}
 ```
 
 ## Build
