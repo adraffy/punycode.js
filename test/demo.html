@@ -109,11 +109,11 @@ code.boxed {
 </head>
 <body>
 <header>
-<h1><a href="https://datatracker.ietf.org/doc/html/rfc3492">Punycode</a> Coder</h1>
-<a href="https://github.com/adraffy/punycode.js">@adraffy/punycode.js</a>
+	<h1><a href="https://datatracker.ietf.org/doc/html/rfc3492">Punycode</a> Coder</h1>
+	<a href="https://github.com/adraffy/punycode.js">@adraffy/punycode.js</a>
 </header>
 <div id="examples">
-	<button data-puny="1">xn--w77hd</button>
+	<button data-puny>xn--w77hd</button>
 	<button>💩</button>
 	<button data-puny>xn--ls8h</button>
 	<button data-puny>xn--u86cy764b</button>
@@ -142,15 +142,15 @@ code.boxed {
 <input id="punycode" autocomplete="off">
 <div id="readme" class="hide">
 <ul>
-<li><b>NO</b> ASCII character restrictions.</li>
-<li><b>NO</b> Unicode transformations.</li>
-<li>Operates on a <b>single</b> label (unless ☑ Split on Stop).</li>
-<li>Input <b>Unicode</b> (upper field) to generate Punycode.</li>
-<li>Input <b>Punycode</b> (lower field) to generate Unicode.</li>
-<li>Use <code>{HEX}</code> to escape Unicode.</li>
-<li>Page URL corresponds to currently selected field.</li>
-<li><a href="https://unicode.org/faq/utf_bom.html">Surrogates</a> are shown as <code>{<span class="surrogate">DFFF</span>}</code></li>
-<li>Additional formatting: <code>{<span class="ascii">ASCII</span>}</code>, <code>{<span class="zwj">ZWJ</span>}</code>, and <code>{<span class="style">Style</span>}</code></li>
+	<li><b>NO</b> ASCII character restrictions.</li>
+	<li><b>NO</b> Unicode transformations.</li>
+	<li>Operates on a <b>single</b> label (unless ☑ Split on Stop).</li>
+	<li>Input <b>Unicode</b> (upper field) to generate Punycode.</li>
+	<li>Input <b>Punycode</b> (lower field) to generate Unicode.</li>
+	<li>Use <code>{HEX}</code> to escape Unicode.</li>
+	<li>Page URL corresponds to currently selected field.</li>
+	<li><a href="https://unicode.org/faq/utf_bom.html">Surrogates</a> are shown as <code>{<span class="surrogate">DFFF</span>}</code></li>
+	<li>Additional formatting: <code>{<span class="ascii">ASCII</span>}</code>, <code>{<span class="zwj">ZWJ</span>}</code>, and <code>{<span class="style">Style</span>}</code></li>
 </ul>
 </div>
 <div id="dns" class="hide">
@@ -226,9 +226,10 @@ punycode_field.addEventListener('keydown', e => {
 		unicode_field.select(); // muhaha
 	}
 });
-init();
+window.addEventListener('hashchange', update_from_hash);
+update_from_hash();
 
-function init() {
+function update_from_hash() {
 	let hash = window.location.hash.slice(1);
 	let pos = hash.indexOf('=');
 	if (pos == 1) {
@@ -291,12 +292,12 @@ function update_ux() {
 		let code = codepoints_div.querySelector('code');
 		if (using_unicode) {
 			name = replace_escapes(name);
-			output.value = split_labels(name).map(s => puny_encoded(s)).join('.');
 			update_url(PARAM_UNICODE, name);
+			output.value = split_labels(name).map(s => puny_encoded(s)).join('.');
 			code.innerHTML = split_labels(name).map(s => make_exploded_html(explode_cp(s))).join('.');
 		} else {
-			output.value = split_labels(name).map(s => String.fromCodePoint(...puny_decoded(s))).join('.');
 			update_url(PARAM_PUNYCODE, name);
+			output.value = split_labels(name).map(s => String.fromCodePoint(...puny_decoded(s))).join('.');
 			code.innerHTML = split_labels(name).map(s => make_exploded_html(puny_decoded(s))).join('.');
 		}
 
