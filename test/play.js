@@ -1,4 +1,4 @@
-import {puny_encoded, puny_encoded_bytes, puny_decoded, is_surrogate} from '../index.js';
+import {puny_encoded, puny_encoded_bytes, puny_decoded, puny_decode, is_surrogate} from '../index.js';
 
 console.log('puny_encoded');
 console.log(puny_encoded("abc"));
@@ -16,7 +16,19 @@ console.log();
 console.log('puny_decoded');
 console.log(puny_decoded([0x61,0x62,0x63]));
 console.log(puny_decoded('xn--ls8h'));
-console.log(puny_decoded('ls8h', true));
+
+console.log();
+console.log('puny_decode');
+console.log(puny_decode([0x6C,0x73,0x38,0x68]));
+console.log(puny_decode('ls8h'));
+
+console.log();
+console.log('is_surrogate');
+console.log(is_surrogate(0x61));
+console.log(is_surrogate(0xDFFF));
+
+console.log();
+console.log('surrogate example');
 
 let str = '💩'; 
 let enc0 = puny_encoded(str);

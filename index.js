@@ -16,8 +16,8 @@ const T_MAX = 26;
 const SKEW = 38;
 const DAMP = 700;
 const BIAS = 72;
-const MIN_CP = 128;
-const MAX_CP = 0x10FFFF;
+export const MIN_CP = 128;
+export const MAX_CP = 0x10FFFF;
 const SHIFT_BASE = BASE - T_MIN;
 const MAX_DELTA = SHIFT_BASE * T_MAX >> 1;
 const CP_HYPHEN = 0x2D;
@@ -70,6 +70,10 @@ function explode_cp(s) {
 	return [...s].map(x => x.codePointAt(0));
 }
 
+function is_uint_array(v, max) {
+	return Array.isArray(v) && v.every(x => Number.isSafeInteger(x) && x >= 0 && x <= max);
+}
+
 // str|number[] -> str 
 export function puny_encoded(x) {
 	if (typeof x === 'string') { 
@@ -85,7 +89,7 @@ export function puny_encoded(x) {
 export function puny_encoded_bytes(x) {
 	if (typeof x === 'string') {
 		return encode(explode_cp(x));
-	} else if (Array.isArray(x) && x.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp <= MAX_CP)) {
+	} else if (is_uint_array(x, MAX_CP)) {
 		let enc = encode(x);
 		return x == enc ? x.slice() : enc;
 	} else {
@@ -144,26 +148,34 @@ function has_label_ext(v) {
 		&& v[3] == CP_HYPHEN;
 }
 
-// string|TypedArray|number -> number[]
-// if not forced, decodes only if "xn--" is present
-// always returns array of codepoints
-export function puny_decoded(x, force) {
+function ascii_from(x) {
 	let cps;
-	if (typeof x === 'string') {
+	if (typeof x === 'string') { // expect ascii string
 		cps = explode_cp(x);
-	} else if (ArrayBuffer.isView(x)) {
+	} else if (ArrayBuffer.isView(x)) { // expect bytes
 		cps = Array.from(x);
-	} else if (Array.isArray(x)) {
-		cps = x.slice();
+	} else {
+		cps = x;
 	}
-	if (cps && cps.every(cp => Number.isSafeInteger(cp) && cp >= 0 && cp < MIN_CP)) {
-		if (!force) {
-			if (!has_label_ext(cps)) return cps;
-			cps = cps.slice(4);
-		}
-		return decode(cps);
+	if (!is_uint_array(cps, MIN_CP-1)) {
+		throw new TypeError(`expected ASCII`);	
 	}
-	throw new TypeError(`expected ASCII`);
+	return cps;
+}
+
+// string|TypedArray|number[] -> number[]
+// decodes only if "xn--" is present
+// always returns array of codepoints
+export function puny_decoded(x) {
+	let cps = ascii_from(x);
+	return has_label_ext(cps) ? decode(cps.slice(4)) : cps === x ? cps.slice() : cps; 
+}
+
+// number[] -> number[]
+// expect raw puny bytes
+// returns array of codepoints
+export function puny_decode(x) {
+	return decode(ascii_from(x));
 }
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-6.2

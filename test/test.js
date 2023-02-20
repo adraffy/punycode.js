@@ -1,4 +1,8 @@
-import {puny_decoded, puny_encoded_bytes} from '../index.js';
+import {
+	puny_decoded, puny_decode, 
+	puny_encoded, puny_encoded_bytes, 
+	is_surrogate, MAX_CP
+} from '../index.js';
 
 // https://datatracker.ietf.org/doc/html/rfc3492#section-7.1
 const TESTS = [
@@ -111,7 +115,6 @@ const TESTS = [
 		encoded: 'xn----dqo34k',
 	}
 ];
-
 function explode_cp(s) {
 	return [...s].map(c => c.codePointAt(0));
 }
@@ -125,7 +128,6 @@ function removed_mixed_casing(s) {
 	let pos = s.lastIndexOf('-') + 1;
 	return s.slice(0, pos) + s.slice(pos).toLowerCase();
 }
-
 for (let test of TESTS) {
 	let enc0 = explode_cp(removed_mixed_casing(test.encoded));
 	let dec0 = explode_cp(test.decoded);
@@ -146,54 +148,62 @@ for (let test of TESTS) {
 		if (!same_array(dec0, dec1)) throw new Error(`wrong decode`);
 	} catch (err) {
 		console.log({...test, enc0, enc1, dec0, dec1});
-		console.log(err);
-		process.exit(1);
+		throw err;
 	}
-	//console.log(test.name);
 }
 console.log('PASS tests');
 
-// create random puny encodings that decode
-// then require that the encoding matches
-let chars = explode_cp('abcdefghijklmnopqrstuvwxyz0123456789');
-for (let r = 0; r < 100_000; r++) {
-	let enc0, dec;
+// test
+function check(cps) {
+	let enc1 = puny_encoded(cps);
+	let enc2 = puny_encoded(String.fromCodePoint(...cps));
+	if (enc1 !== enc2) throw new Error(`wrong encode`);
+	let enc3 = puny_encoded_bytes(cps);
+	if (!same_array(explode_cp(enc2), enc3)) throw new Error('wrong encode bytes');
+	let dec1 = puny_decoded(enc1);
+	let dec2 = puny_decoded(enc3);
+	if (!same_array(cps, dec1)) throw new Error('wrong decode');
+	if (!same_array(cps, dec2)) throw new Error('wrong decode');
+	if (enc2.startsWith('xn--')) {
+		let dec3 = puny_decode(enc3.slice(4));
+		if (!same_array(cps, dec3)) throw new Error('wrong decode');
+	}
+}
+function random_cp(crit_fn) {
 	while (true) {
+		let cp = Math.random() * (1+MAX_CP)|0;
+		if (crit_fn(cp)) return cp;
+	}
+}
+for (let not_surrogate = cp => !is_surrogate(cp), n = 1; n <= 24; n++) {
+	let cps = Array(n);
+	for (let r = 250_000/n|0; r; r--) {
+		for (let i = 0; i < n; i++) {
+			cps[i] = random_cp(not_surrogate);
+		}
+		check(cps);
+	}
+	console.log(`PASS random(${n})`);
+}
+
+// test
+function for_each_cp(fn) {
+	for (let cp = 0; cp <= MAX_CP; cp++) {
+		let cps = fn(cp);
+		let enc, dec;
 		try {
-			enc0 = Array(32).fill().map(() => chars[Math.random() * chars.length|0]);
-			dec = puny_decoded(enc0);
-			break;
+			enc = puny_encoded_bytes(cps);
+			dec = puny_decoded(enc);
+			if (!same_array(cps, dec)) throw new Error(`wrong`);
 		} catch (err) {
+			console.log({cp, cps, enc, dec});
+			throw err;
 		}
 	}
-	let str = String.fromCodePoint(...dec);
-	let enc1;	
-	try {
-		enc1 = puny_encoded_bytes(dec);
-		if (!same_array(enc0, enc1)) throw new Error(`wrong encode`);
-		if (!same_array(puny_decoded(puny_encoded_bytes(str)), dec)) throw new Error(`wrong str`);
-	} catch (err) {
-		console.log(enc0, dec, enc1);
-		console.log(err);
-		process.exit(2);
-	}	
-	//console.log(str);
+	console.log(`PASS exhaustive [${fn('$cp')}]`);
 }
-console.log('PASS random');
-
-// encode and decode every character
-for (let cp = 0; cp <= 0x10FFFF; cp++) {
-	let enc, dec;
-	try {
-		enc = puny_encoded_bytes([cp]);
-		dec = puny_decoded(enc);
-		if (dec.length != 1 || dec[0] !== cp) throw new Error(`wrong`);
-	} catch (err) {
-		console.log(cp, enc, dec);
-		console.log(err);
-		process.exit(3);
-	}
-}
-console.log('PASS lossless');
+for_each_cp(cp => [cp]);
+for_each_cp(cp => [0x61, cp]);
+for_each_cp(cp => [cp, 0x61]);
 
 console.log('OK');
