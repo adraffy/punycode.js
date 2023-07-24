@@ -362,7 +362,7 @@ function get_url_state(uni, puny) {
 function is_RFC1123(name) {
 	let max = 253;
 	if (name.length > max+1) return false; 
-	if (!/^[a-zA-z0-9-.]+$/.test(name)) return false;
+	if (!/^[a-zA-Z0-9-.]+$/.test(name)) return false;
 	if (name.endsWith('.')) name = name.slice(0, -1);
 	if (name.length > max) return false;
 	return name.split('.').every(s => !s.startsWith('-') && !s.endsWith('-') && s.length < 64);
