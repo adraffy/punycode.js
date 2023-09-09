@@ -110,7 +110,7 @@ code.boxed {
 <body>
 <header>
 	<h1><a href="https://datatracker.ietf.org/doc/html/rfc3492">Punycode</a> Coder</h1>
-	<a href="https://github.com/adraffy/punycode.js">@adraffy/punycode.js</a>
+	<a href="https://github.com/adraffy/punycode.js">adraffy/punycode.js</a>
 </header>
 <div id="examples">
 	<button data-puny>xn--w77hd</button>
@@ -360,11 +360,9 @@ function get_url_state(uni, puny) {
 }
 
 function is_RFC1123(name) {
-	let max = 253;
-	if (name.length > max+1) return false; 
 	if (!/^[a-zA-Z0-9-.]+$/.test(name)) return false;
 	if (name.endsWith('.')) name = name.slice(0, -1);
-	if (name.length > max) return false;
+	if (name.length > 253) return false;
 	return name.split('.').every(s => !s.startsWith('-') && !s.endsWith('-') && s.length < 64);
 }
 

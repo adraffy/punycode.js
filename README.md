@@ -4,7 +4,7 @@
 
 * [`2KB`](./dist/index.min.js) **Default** — full library
 
-[Demo](https://adraffy.github.io/punycode.js/test/demo.html)
+[**Demo**](https://adraffy.github.io/punycode.js/test/demo.html) ⭐️
 
 ```Javascript
 import {puny_encoded, puny_decoded} from '@adraffy/punycode';
@@ -84,4 +84,4 @@ if (decoded.some(is_surrogate)) {
 ## Build
 
 * `npm run test` &mdash; run tests
-* `npm run build` &mdash; create `/dist/`
+* `npm run build` &mdash; creates `/dist/`
