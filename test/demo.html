@@ -218,7 +218,7 @@ unicode_field.addEventListener('focus', () => {
 });
 punycode_field.addEventListener('input', update_using_punycode);
 punycode_field.addEventListener('focus', () => {
-	if (unicode_field.value) update_using_punycode();
+	if (punycode_field.value) update_using_punycode();
 });
 punycode_field.addEventListener('keydown', e => {
 	if (e.key == 'Tab') {
@@ -349,7 +349,7 @@ function get_url_state(uni, puny) {
 			return `✅ Verbatim`;
 		} 
 		let m0 = split_labels(puny).map(explode_cp);
-		let m1 = split_labels(browser).map(puny_decoded);
+		let m1 = split_labels(browser).map(puny_encoded);
 		if (m0.length != m1.length || m0.some((v0, i) => same_array(v0, m1[i]))) {
 			return `⚠️ Mangled: <code class="boxed">${browser}</code>`;
 		}
