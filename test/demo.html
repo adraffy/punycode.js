@@ -347,13 +347,11 @@ function get_url_state(uni, puny) {
 		let browser = new URL(`http://${puny}`).hostname;
 		if (uni === browser) {
 			return `✅ Verbatim`;
-		} 
-		let m0 = split_labels(puny).map(explode_cp);
-		let m1 = split_labels(browser).map(puny_encoded);
-		if (m0.length != m1.length || m0.some((v0, i) => same_array(v0, m1[i]))) {
-			return `⚠️ Mangled: <code class="boxed">${browser}</code>`;
 		}
-		return '✅ Punycodes correctly';
+		if (puny === browser) {
+			return '✅ Punycodes correctly';
+		}
+		return `⚠️ Mangled: <code class="boxed">${browser}</code>`;
 	} catch (err) {
 		return `❌`;
 	}
@@ -412,13 +410,6 @@ function make_exploded_html(cps) {
 
 function explode_cp(s) {
 	return [...s].map(x => x.codePointAt(0));
-}
-
-function same_array(a, b) {
-	return Array.isArray(a) 
-		&& Array.isArray(b) 
-		&& a.length === b.length 
-		&& a.every((x, i) => x === b[i]);
 }
 </script>
 </body>
