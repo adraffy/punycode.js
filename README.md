@@ -11,7 +11,7 @@ import {puny_encoded, puny_decoded} from '@adraffy/punycode';
 // npm i @adraffy/punycode
 // browser: https://cdn.jsdelivr.net/npm/@adraffy/punycode@latest/dist/index.min.js
 
-// (string:number[]) -> string
+// (string|number[]) -> string
 // input unicode string or codepoints
 // returns string, prepends "xn--" if puny
 // throws on error

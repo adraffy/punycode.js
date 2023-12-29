@@ -13,7 +13,7 @@ body {
 	background: #eee;
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 8px;
 }
 header {
 	display: flex;
@@ -24,33 +24,40 @@ label > span {
 }
 button {
 	cursor: pointer;
+	font-size: 100%;
+	padding: 4px 8px;
 }
 h1 {
 	font-size: 24pt;
 	margin: 0;
 }
 input {
-	padding: 0.5rem;
+	padding: 8px;
 	font-size: 16pt;
 }
 #actions {
+	border-top: 2px solid #fff;
+	padding-top: 8px;
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 8px;
 }
 #actions button {
-	padding: 0.25rem;
 	white-space: pre;
 }
 #examples {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 3px;
+	gap: 4px;
+}
+#examples button {
+	padding: 2px 4px;
+	font-size: 80%;
 }
 #codepoints {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 8px;
 }
 #codepoints > span {
 	font-size: 16pt;
@@ -409,7 +416,7 @@ function make_exploded_html(cps) {
 }
 
 function explode_cp(s) {
-	return [...s].map(x => x.codePointAt(0));
+	return Array.from(s, x => x.codePointAt(0));
 }
 </script>
 </body>
