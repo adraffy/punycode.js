@@ -11,9 +11,6 @@
 body { 
 	margin: 3rem; 
 	background: #eee;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
 }
 header {
 	display: flex;
@@ -35,9 +32,16 @@ input {
 	padding: 8px;
 	font-size: 16pt;
 }
+#punycode, 
+#unicode {
+	width: 100%;
+	box-sizing: border-box;
+	margin: 8px 0;
+}
 #actions {
 	border-top: 2px solid #fff;
 	padding-top: 8px;
+	margin-bottom: 2px;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -46,6 +50,7 @@ input {
 	white-space: pre;
 }
 #examples {
+	margin: 8px 0;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
@@ -87,6 +92,7 @@ input {
 	background-color: #fff;
 }
 footer {
+	margin: 16px 0;
 	text-align: center;
 	color: #666;
 }
@@ -97,12 +103,17 @@ code.boxed {
 	border-radius: 4px;
 	font-size: 16pt;
 }
+.prop {
+	margin-top: 4px;
+}
 #readme {
+	margin: 8px 0 0 0;
+	padding: 16px 16px 16px 36px;
 	background: #ffc;
 	font-size: 14pt;
-}
-#readme li + li {
-	margin-top: 5px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 @media only screen and (max-width: 800px) { 
 	body {
@@ -126,6 +137,7 @@ code.boxed {
 	<button data-puny>xn--u86cy764b</button>
 	<button data-puny>xn--v86cw764b</button>
 	<button data-puny>xn--8c9by4f</button>
+	<button>xn--💩</button>
 	<button>👩🏽‍⚕️</button>
 	<button>👩🏽⚕</button>
 	<button>🚴‍♂️</button>
@@ -147,8 +159,7 @@ code.boxed {
 </div>
 <div id="error" class="hide"></div>
 <input id="punycode" autocomplete="off">
-<div id="readme" class="hide">
-<ul>
+<ul id="readme" class="hide">
 	<li><b>NO</b> ASCII character restrictions.</li>
 	<li><b>NO</b> Unicode transformations.</li>
 	<li>Operates on a <b>single</b> label (unless ☑ Split on Stop).</li>
@@ -159,14 +170,13 @@ code.boxed {
 	<li><a href="https://unicode.org/faq/utf_bom.html">Surrogates</a> are shown as <code>{<span class="surrogate">DFFF</span>}</code></li>
 	<li>Additional formatting: <code>{<span class="ascii">ASCII</span>}</code>, <code>{<span class="zwj">ZWJ</span>}</code>, and <code>{<span class="style">Style</span>}</code></li>
 </ul>
-</div>
-<div id="dns" class="hide">
+<div class="prop" id="dns" class="hide">
 	<b>DNS <a href="https://datatracker.ietf.org/doc/html/rfc1123">Hostname</a>:</b> <span class="inner"></span>
 </div>
-<div id="browser" class="hide">
+<div class="prop" id="browser" class="hide">
 	<b>Browser <a href="https://url.spec.whatwg.org/">URL</a> Support:</b> <span class="inner"></span>
 </div>
-<div id="reverse" class="hide">
+<div class="prop" id="reverse" class="hide">
 	<b>Puny→Uni→Puny:</b> <span class="inner"></span>
 </div>
 <footer>Created by <a href="https://twitter.com/adraffy">raffy.eth</a></footer>

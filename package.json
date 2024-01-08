@@ -8,13 +8,15 @@
 	"type": "module",
 	"exports": {
 		".": {
-		  "require": "./dist/index.cjs",
-		  "import": "./dist/index.js",
-		  "types": "./dist/index.d.ts"
+			"require": "./dist/index.cjs",
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
 		}
 	},
 	"main": "./dist/index.js",
-	"files": ["./dist"],
+	"files": [
+		"./dist"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/adraffy/punycode.js.git"

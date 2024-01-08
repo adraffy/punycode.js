@@ -64,8 +64,8 @@ let str0 = '💩';
 let enc0 = puny_encoded(str0); // "xn--ls8h"
 let enc1 = puny_encoded([str0.charCodeAt(0), str0.charCodeAt(1)]); // "xn--8c9by4f"
 // two different decodings
-let dec0 = puny_decoded(enc0)); // <1F4A9>
-let dec1 = puny_decoded(enc1)); // <D83D DCA9>
+let dec0 = puny_decoded(enc0); // <1F4A9>
+let dec1 = puny_decoded(enc1); // <D83D DCA9>
 // however, equal strings
 str0 === String.fromCodePoint(...dec0); // true
 str0 === String.fromCodePoint(...dec1); // true
@@ -83,5 +83,5 @@ if (decoded.some(is_surrogate)) {
 
 ## Build
 
-* `npm run test` &mdash; run tests
-* `npm run build` &mdash; creates `/dist/`
+* `npm run test` &mdash; run [tests](./test/)
+* `npm run build` &mdash; creates [`/dist/`](./dist/)
